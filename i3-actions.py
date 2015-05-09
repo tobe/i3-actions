@@ -39,7 +39,7 @@ class i3actions(object):
 
         sys.exit(0) # Maybe you can chain this with some unix tools?
 
-    def dmenu(self, data, lines):
+    def _dmenu(self, data, lines):
         data = bytes(str.join('\n', data), 'UTF-8') # Join all the newline and UTF-8 encode it.
         try:
             p = Popen(self.dmenu_args + ['-l', str(lines)], stdin=PIPE, stdout=PIPE, stderr=PIPE)
@@ -54,7 +54,7 @@ class i3actions(object):
 
         return stdout
 
-    def get_window_names(self):
+    def _get_window_names(self):
         outputs = self.connection.get_tree().leaves()
 
         windows = []
@@ -64,17 +64,17 @@ class i3actions(object):
         return windows
 
     def jump_to(self):
-        windows = self.get_window_names()
+        windows = self._get_window_names()
 
         # Send the command, receive it and decode it.
-        cmd = self.dmenu(windows, len(windows)).decode('UTF-8').strip()
+        cmd = self._dmenu(windows, len(windows)).decode('UTF-8').strip()
 
         # Just execute...
         self.connection.command('[title="%s"] focus' % cmd)
 
     def move_here(self):
         # Get all the windows
-        windows = self.get_window_names()
+        windows = self._get_window_names()
 
         # Find the name of the focused workspace!
         outputs = self.connection.get_workspaces()
@@ -83,13 +83,13 @@ class i3actions(object):
             if ws.focused: focused = ws.name
 
         # Find the target window user wants to move...
-        target_window = self.dmenu(windows, len(windows)).decode('UTF-8').strip()
+        target_window = self._dmenu(windows, len(windows)).decode('UTF-8').strip()
 
         # Issue the command
         self.connection.command('[title="%s"] move container to workspace %s' % (target_window, focused))
 
     def ch_layout(self):
-        req_layout = self.dmenu(['default', 'tabbed', 'stacking', 'splitv', 'splith'], 5).decode('UTF-8').strip()
+        req_layout = self._dmenu(['default', 'tabbed', 'stacking', 'splitv', 'splith'], 5).decode('UTF-8').strip()
 
         self.connection.command('layout %s' % req_layout)
 
