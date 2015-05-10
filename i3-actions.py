@@ -20,7 +20,7 @@ class i3actions(object):
         self.main_output = 'CRT2'
 
         # Handle the input argument
-        if len(sys.argv) < 2:
+        if(len(sys.argv)) < 2:
             print('Usage: %s ACTION\n\nWhere ACTION is either one of these: jump_to, move_here' % sys.argv[0])
             sys.exit(1)
 
@@ -45,7 +45,7 @@ class i3actions(object):
         ddata = bytes(str.join('\n', list(data.values())), 'UTF-8') # Join all the newline and UTF-8 encode it.
 
         try:
-            if prompt: self.dmenu_args = self.dmenu_args + ['-p', prompt]
+            if(prompt): self.dmenu_args = self.dmenu_args + ['-p', prompt]
             p = Popen(self.dmenu_args + ['-l', str(lines)], stdin=PIPE, stdout=PIPE, stderr=PIPE)
         except ValueError as e:
             print('Popen construct failed: %s' % e.message)
@@ -62,7 +62,7 @@ class i3actions(object):
 
         # We need to get the key by the value the user chooses. Remember the key is the ID, the value is the actual name.
         for id, name in data.items():
-            if name == stdout: # They match
+            if(name == stdout): # They match
                 return id # Return the ID to the parent (caller) function
 
     def _get_window_names(self):
@@ -70,7 +70,7 @@ class i3actions(object):
 
         windows = {}
         for w in outputs:
-            if w.name in windows: continue # This makes sure there are no duplicates. Refer to docs about this one.
+            if(w.name in windows): continue # This makes sure there are no duplicates. Refer to docs about this one.
             windows[w.id] = w.name
 
         return windows
@@ -80,7 +80,7 @@ class i3actions(object):
 
         # Send the command, receive the output. This will return the ID of the window, of course.
         cmd = self._dmenu(windows, len(windows))
-        if __verbose__: print(cmd)
+        if(__verbose__): print(cmd)
 
         # Just execute...
         self.connection.command('[con_id="%d"] focus' % cmd)
@@ -93,7 +93,7 @@ class i3actions(object):
         outputs = self.connection.get_workspaces()
         focused = None
         for ws in outputs:
-            if ws.focused: focused = ws.name
+            if(ws.focused): focused = ws.name
 
         # Find the target window user wants to move...
         target_window = self._dmenu(windows, len(windows)).decode('UTF-8').strip()
@@ -110,7 +110,7 @@ class i3actions(object):
         workspaces = []
         i = 1
         for ws in self.connection.get_workspaces():
-            if i == ws.num and ws.output == self.main_output:
+            if(i == ws.num and ws.output == self.main_output):
                 i = i+1
                 continue
             else:
