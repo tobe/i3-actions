@@ -25,8 +25,7 @@ playground since I'm learning about i3ipc as I'm coding this.
 
 **However**, if you'd like to give it a try, this should work:
 ```bash
-cd /tmp; wget -O i3-actions.py https://raw.githubusercontent.com/infyhr/i3-actions/master/i3-actions.py && python3 
-./i3-actions.py jump_to
+cd /tmp; wget -O i3-actions.py https://raw.githubusercontent.com/infyhr/i3-actions/master/i3-actions.py && python3 ./i3-actions.py jump_to
 ```
 
 If you get a dmenu instance containing the names of windows you've got open, congratulations, it works out of the 
