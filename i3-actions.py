@@ -6,6 +6,7 @@ __verbose__ = True
 import sys
 import subprocess
 from subprocess import Popen, PIPE
+from collections import OrderedDict
 
 try:
     import i3ipc
@@ -16,8 +17,11 @@ except ImportError:
 class i3actions(object):
 
     def __init__(self):
-        self.dmenu_args = ['/usr/bin/dmenu'] + ['-b', '-i'] # Refer to docs about this one. Make it more appealing here.
-        self.main_output = 'CRT2'
+        self.dmenu_args   = ['/usr/bin/dmenu'] + ['-b', '-i'] # Refer to docs about this one. Make it more appealing here.
+        #self.layout_order = {'default': 'default', 'tabbed': 'tabbed', 'stacking': 'stacking', 'splitv': 'split vertically', 'split': 'split horizontally'}
+        #self.layout_order = OrderedDict({'default': 'default', 'tabbed': 'tabbed', 'stacking': 'stacking', 'splitv': 'split vertically', 'split': 'split horizontally'})
+        self.layout_order = OrderedDict([('default', 'default'), ('tabbed', 'tabbed'), ('stacking', 'stacking'), ('splitv', 'split vertically'), ('splith', 'split horizontally')])
+        self.main_output  = 'CRT2'
 
         # Handle the input argument
         if(len(sys.argv)) < 2:
@@ -45,7 +49,7 @@ class i3actions(object):
         ddata = bytes(str.join('\n', list(data.values())), 'UTF-8') # Join all the newline and UTF-8 encode it.
 
         try:
-            if(prompt): self.dmenu_args = self.dmenu_args + ['-p', prompt]
+            if prompt: self.dmenu_args = self.dmenu_args + ['-p', prompt]
             p = Popen(self.dmenu_args + ['-l', str(lines)], stdin=PIPE, stdout=PIPE, stderr=PIPE)
         except ValueError as e:
             print('Popen construct failed: %s' % e.message)
@@ -55,7 +59,7 @@ class i3actions(object):
             sys.exit(1)
 
         stdout, stderr = p.communicate(ddata)
-        if(stderr): print('stderr: %s' % stderr) # Could be useful for debugging?
+        if stderr: print('stderr: %s' % stderr) # Could be useful for debugging?
 
         # Decode and strip newline from dmenu's return
         stdout = stdout.decode('UTF-8').strip()
@@ -79,8 +83,8 @@ class i3actions(object):
         windows = self._get_window_names()
 
         # Send the command, receive the output. This will return the ID of the window, of course.
-        cmd = self._dmenu(windows, len(windows))
-        if(__verbose__): print(cmd)
+        cmd = self._dmenu(windows, len(windows), 'jump to:')
+        if __verbose__: print(cmd)
 
         # Just execute...
         self.connection.command('[con_id="%d"] focus' % cmd)
@@ -91,19 +95,18 @@ class i3actions(object):
 
         # Find the name of the focused workspace!
         outputs = self.connection.get_workspaces()
-        focused = None
         for ws in outputs:
-            if(ws.focused): focused = ws.name
+            if ws.focused: focused = ws.name
 
         # Find the target window user wants to move...
-        target_window = self._dmenu(windows, len(windows)).decode('UTF-8').strip()
+        target_window = self._dmenu(windows, len(windows), 'move here:')
 
         # Issue the command
-        self.connection.command('[title="%s"] move container to workspace %s' % (target_window, focused))
+        self.connection.command('[con_id="%s"] move container to workspace %s' % (target_window, focused))
 
     def ch_layout(self):
-        req_layout = self._dmenu(['default', 'tabbed', 'stacking', 'splitv', 'splith'], 5).decode('UTF-8').strip()
-
+        #req_layout = self._dmenu(['default', 'tabbed', 'stacking', 'splitv', 'splith'], 5).decode('UTF-8').strip()
+        req_layout = self._dmenu(self.layout_order, 5, 'layout:')
         self.connection.command('layout %s' % req_layout)
 
     def first_free(self):
@@ -121,17 +124,34 @@ class i3actions(object):
     def kill(self):
         pass
 
+    def marks_jump():
+        pass
+    def marks_remove():
+        pass
+    def marks_add():
+        pass
+
     def rename(self):
         # Get all the workspaces
         workspaces = self.connection.get_workspaces()
 
         # Find the current workspace ID, not the name
         for ws in workspaces:
-            if(ws.focused): ws_current = ws.num
+            if ws.focused: ws_current = ws.num
 
-        # Prompt the user for a new name
-        #self._dmenu(0, )
-        pass
+        # Prompt the user for a new name (dirty, we have to pipe anything in order for dmenu to pop out!)
+        try:
+            p = Popen(self.dmenu_args + ['-l', '1', '-p', 'rename to:'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        except OSError as e:
+            print('OSError: %s' % e.message)
+            sys.exit(1)
+
+        new_name, stderr = p.communicate('')
+        new_name = new_name.decode('UTF-8').strip()
+
+        # If the user entered a name then rename
+        if new_name:
+            self.connection.command('rename workspace to %d:%s' % (ws_current, new_name))
 
 if __name__ == '__main__':
     i3actions()
