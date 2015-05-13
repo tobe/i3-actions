@@ -18,9 +18,24 @@ class i3actions(object):
 
     def __init__(self):
         self.dmenu_args   = ['/usr/bin/dmenu'] + ['-b', '-i'] # Refer to docs about this one. Make it more appealing here.
-        #self.layout_order = {'default': 'default', 'tabbed': 'tabbed', 'stacking': 'stacking', 'splitv': 'split vertically', 'split': 'split horizontally'}
-        #self.layout_order = OrderedDict({'default': 'default', 'tabbed': 'tabbed', 'stacking': 'stacking', 'splitv': 'split vertically', 'split': 'split horizontally'})
-        self.layout_order = OrderedDict([('default', 'default'), ('tabbed', 'tabbed'), ('stacking', 'stacking'), ('splitv', 'split vertically'), ('splith', 'split horizontally')])
+        self.layout_items = OrderedDict([
+                                ('default', 'default'),
+                                ('tabbed', 'tabbed'), 
+                                ('stacking', 'stacking'),
+                                ('splitv', 'split vertically'), 
+                                ('splith', 'split horizontally')
+                            ])
+        self.menu_items   = OrderedDict([
+                                ('ch_layout', 'change layout'),
+                                ('first_free', 'first free workspace'),
+                                ('jump_to', 'jump to...'),
+                                ('kill', 'kill'),
+                                ('marks_add', 'mark: add'),
+                                ('marks_jump', 'mark: jump to'),
+                                ('marks_remove', 'mark: remove'),
+                                ('move_here', 'move to here'),
+                                ('rename', 'rename workspace')
+                            ])
         self.main_output  = 'CRT2'
 
         # Handle the input argument
@@ -59,7 +74,7 @@ class i3actions(object):
             sys.exit(1)
 
         stdout, stderr = p.communicate(ddata)
-        if stderr: print('stderr: %s' % stderr) # Could be useful for debugging?
+        if stderr and __verbose__: print('stderr: %s' % stderr)
 
         # Decode and strip newline from dmenu's return
         stdout = stdout.decode('UTF-8').strip()
@@ -105,8 +120,7 @@ class i3actions(object):
         self.connection.command('[con_id="%s"] move container to workspace %s' % (target_window, focused))
 
     def ch_layout(self):
-        #req_layout = self._dmenu(['default', 'tabbed', 'stacking', 'splitv', 'splith'], 5).decode('UTF-8').strip()
-        req_layout = self._dmenu(self.layout_order, 5, 'layout:')
+        req_layout = self._dmenu(self.layout_items, len(self.layout_items), 'layout:')
         self.connection.command('layout %s' % req_layout)
 
     def first_free(self):
@@ -152,6 +166,21 @@ class i3actions(object):
         # If the user entered a name then rename
         if new_name:
             self.connection.command('rename workspace to %d:%s' % (ws_current, new_name))
+
+    def show_menu(self):
+        # Just send the list to the dmenu command and that's about it.
+        action = self._dmenu(self.menu_items, len(self.menu_items), 'action:')
+
+        if action == None:
+            return
+
+        # Now let's see whether it exists or not!
+        try:
+            action = getattr(self, action)
+        except AttributeError:
+            print('action %s: not found.' % action)
+        else:
+            action()
 
 if __name__ == '__main__':
     i3actions()
