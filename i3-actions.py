@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __version__ = '1.4'
-__verbose__ = True
 
 import sys
 import subprocess
 from subprocess import Popen, PIPE
 from collections import OrderedDict
+from os.path import expanduser
+import re
 
 try:
     import i3ipc
@@ -62,7 +63,6 @@ class i3actions(object):
 
     def _dmenu(self, data, lines, prompt = None):
         ddata = bytes(str.join('\n', list(data.values())), 'UTF-8') # Join all the newline and UTF-8 encode it.
-        if __verbose__: print(ddata)
 
         try:
             if prompt: self.dmenu_args = self.dmenu_args + ['-p', prompt]
@@ -75,7 +75,7 @@ class i3actions(object):
             sys.exit(1)
 
         stdout, stderr = p.communicate(ddata)
-        if stderr and __verbose__: print('stderr: %s' % stderr)
+        if stderr: print('stderr: %s' % stderr)
 
         # Decode and strip newline from dmenu's return
         stdout = stdout.decode('UTF-8').strip()
@@ -187,6 +187,37 @@ class i3actions(object):
             print('action %s: not found.' % action)
         else:
             action() # Call it.
+
+    def restore(self):
+        # Get homedir
+        home = expanduser('~')
+
+        # Try to grab the config file
+        try:
+            fp = open(home + '/.i3/config', 'r')
+        except IOError as e:
+            print('Failed to open the config: %s' % e.message)
+            sys.exit(1)
+
+        # Read the file
+        data = fp.read()
+        if not data: return
+
+        # Compile my poor regex. The reason why (.*) is there is that it can really be anything. Even japanese for "one" -> "一"
+        regex = re.compile("^workspace (.*) output [a-zA-Z0-9-_]*", re.IGNORECASE|re.MULTILINE|re.UNICODE)
+
+        workspaces = regex.findall(data)
+        if not workspaces: return
+
+        # Get all current workspaces.
+        workspaces_now = self.connection.get_workspaces()
+
+        # Now count from the first workspace to the nth workspace.
+        i = 0
+        for ws in workspaces:
+            # Execute the command for each workspace.
+            self.connection.command('rename workspace %s to %s' % (workspaces_now[i]['name'], ws))
+            i = i+1
 
 if __name__ == '__main__':
     i3actions()
