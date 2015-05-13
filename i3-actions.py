@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 __version__ = '1.4'
 __verbose__ = True
@@ -62,6 +62,7 @@ class i3actions(object):
 
     def _dmenu(self, data, lines, prompt = None):
         ddata = bytes(str.join('\n', list(data.values())), 'UTF-8') # Join all the newline and UTF-8 encode it.
+        if __verbose__: print(ddata)
 
         try:
             if prompt: self.dmenu_args = self.dmenu_args + ['-p', prompt]
@@ -99,7 +100,6 @@ class i3actions(object):
 
         # Send the command, receive the output. This will return the ID of the window, of course.
         cmd = self._dmenu(windows, len(windows), 'jump to:')
-        if __verbose__: print(cmd)
 
         # Just execute...
         self.connection.command('[con_id="%d"] focus' % cmd)
@@ -136,7 +136,14 @@ class i3actions(object):
         self.connection.command('workspace number %d' % i)
 
     def kill(self):
-        pass
+        # Grab the window names
+        windows = self._get_window_names()
+
+        # Show dmenu
+        victim = self._dmenu(windows, len(windows), 'kill:')
+
+        # Execute the command
+        self.connection.command('[con_id="%s"] kill' % victim)
 
     def marks_jump():
         pass
@@ -171,8 +178,7 @@ class i3actions(object):
         # Just send the list to the dmenu command and that's about it.
         action = self._dmenu(self.menu_items, len(self.menu_items), 'action:')
 
-        if action == None:
-            return
+        if action == None: return
 
         # Now let's see whether it exists or not!
         try:
@@ -180,7 +186,7 @@ class i3actions(object):
         except AttributeError:
             print('action %s: not found.' % action)
         else:
-            action()
+            action() # Call it.
 
 if __name__ == '__main__':
     i3actions()
