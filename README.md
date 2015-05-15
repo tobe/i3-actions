@@ -10,6 +10,8 @@ It features:
 - jumping to the first **free** workspace
 - killing applications
 - renaming workspaces on fly
+- TBA: working with marks (adding, removing, jumping to)
+- TBA: scratchpad support? someday maybe...
 
 Keep in mind some of these have yet to be fully implemented.
 
@@ -18,21 +20,24 @@ Keep in mind some of these have yet to be fully implemented.
 * ```i3-wm``` and ```dmenu```, obviously.
 * [i3ipc](https://github.com/acrisci/i3ipc-python) installed
 
-## installation and setup
-There is no ```setup.py``` at the moment, however you can install it by downloading and running 
-```i3-actions.py```. I will add the setup information once it's barely useful. At the moment it's a dirty 
-playground since I'm learning about i3ipc as I'm coding this.
+## installation
+There is no ```setup.py``` at the moment, however you can install it by downloading and running ```i3-actions.py```.
 
-**However**, if you'd like to give it a try, this should work:
+I will add the setup information once it's barely useful.  
+At the moment it's a dirty playground since I'm learning about i3ipc as I'm coding this.
+
+**However**, if you'd like to give it a try, **install [i3ipc](https://github.com/acrisci/i3ipc-python)** and this should work:
 ```bash
 cd /tmp; wget -O i3-actions.py https://raw.githubusercontent.com/infyhr/i3-actions/master/i3-actions.py && python3 ./i3-actions.py jump_to
 ```
 
-If you get a dmenu instance containing the names of windows you've got open, congratulations, it works out of the 
-box. Now select one, hit return and you should move to that window.
+If you get a dmenu instance containing the names of windows you've got open, congratulations, it works out of the box.
 
-It will not work if you've got dmenu installed in a location other than ```/usr/bin```, but no worries, you can 
-change this.
+If not, you've either got no ``dmenu`` installed, or perhaps it's not installed in ``/usr/bin``.  
+Of course, you can change this by changing ``self.dmenu_args``
+
+## setup
+TBA
 
 ## configuration
 TBA
