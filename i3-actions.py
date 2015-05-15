@@ -35,7 +35,8 @@ class i3actions(object):
                                 ('marks_jump', 'mark: jump to'),
                                 ('marks_remove', 'mark: remove'),
                                 ('move_here', 'move to here'),
-                                ('rename', 'rename workspace')
+                                ('rename', 'rename workspace'),
+                                ('restore', 'restore workspaces')
                             ])
         self.main_output  = 'CRT2'
 
@@ -62,6 +63,18 @@ class i3actions(object):
         sys.exit(0) # Maybe you can chain this with some unix tools?
 
     def _dmenu(self, data, lines, prompt = None):
+        """Internal function that calls dmenu, pipes a list of arguments to it, catches the response and then returns it.
+        This is used throughout the project in order to efficiently call dmenu.
+        The data passed is UTF-8 encoded and decoded+stripped from any newlines when returned.
+
+        Arguments:
+            data (dict):  a dictionary containing the data to be piped to dmenu. Values will be displayed to the user and the corresponding *key* will be returned
+                          This is so you can pass window IDs and show the window names to the user. In such example, an ID would be returned.
+            lines (int):  number of lines the data dictionary has.
+            prompt (str): dmenu -p parameter. It just shows a prompt so you know what you're actually doing.
+        Returns:
+            id (mixed): The key of the dictionary supplied.
+        """
         ddata = bytes(str.join('\n', list(data.values())), 'UTF-8') # Join all the newline and UTF-8 encode it.
 
         try:
@@ -85,7 +98,29 @@ class i3actions(object):
             if(name == stdout): # They match
                 return id # Return the ID to the parent (caller) function
 
+    def _dmenu_null(self, prompt):
+        """See self._dmenu (above). Doesn't accept any data as it does not pipe anything to dmenu (just used to display a prompt instead of i3-input)
+
+        Arguments:
+            prompt (str): dmenu -p parameter. It just shows a prompt so you know what you're actually doing.
+        Returns:
+            mixed: user input
+        """
+        try:
+            p = Popen(self.dmenu_args + ['-l', '1', '-p', prompt], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        except OSError as e:
+            print('OSError: %s' % e.message)
+            sys.exit(1)
+
+        new_name, stderr = p.communicate('') # Pipe nothing, dirty but we have to do this in order for dmenu to show.
+        return new_name.decode('UTF-8').strip() # And just return what user entered. Simple as that.
+
     def _get_window_names(self):
+        """Internal function. Returns the names of all windows in every workspace.
+
+        Returns:
+            windows (dict): a dictionary containing window IDs and names (id => name)
+        """
         outputs = self.connection.get_tree().leaves()
 
         windows = {}
@@ -96,6 +131,7 @@ class i3actions(object):
         return windows
 
     def jump_to(self):
+        """Jumps to any window on any workspace."""
         windows = self._get_window_names()
 
         # Send the command, receive the output. This will return the ID of the window, of course.
@@ -105,6 +141,7 @@ class i3actions(object):
         self.connection.command('[con_id="%d"] focus' % cmd)
 
     def move_here(self):
+        """Moves any window to the currently focused workspace."""
         # Get all the windows
         windows = self._get_window_names()
 
@@ -120,10 +157,12 @@ class i3actions(object):
         self.connection.command('[con_id="%s"] move container to workspace %s' % (target_window, focused))
 
     def ch_layout(self):
+        """Displays a list of choosable layouts."""
         req_layout = self._dmenu(self.layout_items, len(self.layout_items), 'layout:')
         self.connection.command('layout %s' % req_layout)
 
     def first_free(self):
+        """Jumps to the first free workspace."""
         workspaces = []
         i = 1
         for ws in self.connection.get_workspaces():
@@ -136,6 +175,7 @@ class i3actions(object):
         self.connection.command('workspace number %d' % i)
 
     def kill(self):
+        """Kills any window the user chooses on any workspace (WM_DELETE)"""
         # Grab the window names
         windows = self._get_window_names()
 
@@ -145,14 +185,41 @@ class i3actions(object):
         # Execute the command
         self.connection.command('[con_id="%s"] kill' % victim)
 
-    def marks_jump():
-        pass
-    def marks_remove():
-        pass
-    def marks_add():
-        pass
+    def marks_jump(self, remove = False):
+        """Jumps to any user-set marks."""
+        # Retrieve a list of marks.
+        marked = self.connection.get_tree().leaves()
+
+        marks = {}
+        for l in marked:
+            if l.mark != None: marks[l.mark] = '%s' % l.mark
+
+        if len(marks) == 0:
+            marks[0] = '(there are no marks)'
+
+        # Now that we have a dictionary of marks, show it to the user.
+        chosen_mark = self._dmenu(marks, len(marks), 'goto mark:')
+
+        # Remove the mark (unmark)!
+        if remove:
+            self.connection.command('unmark %s' % chosen_mark)
+        else: # Focus the mark!
+            self.connection.command('[con_mark="%s"] focus' % chosen_mark)
+
+    def marks_remove(self):
+        """Removes the chosen user-set mark."""
+        self.marks_jump(1)
+
+    def marks_add(self):
+        """Adds a mark (of the currently focused window)."""
+        # Let's ask the user for a mark name
+        mark = self._dmenu_null('mark as:')
+
+        # And now we set the mark?
+        if mark and mark != 'None': self.connection.command('mark %s' % mark)
 
     def rename(self):
+        """Renames the currently focused workspace."""
         # Get all the workspaces
         workspaces = self.connection.get_workspaces()
 
@@ -160,21 +227,15 @@ class i3actions(object):
         for ws in workspaces:
             if ws.focused: ws_current = ws.num
 
-        # Prompt the user for a new name (dirty, we have to pipe anything in order for dmenu to pop out!)
-        try:
-            p = Popen(self.dmenu_args + ['-l', '1', '-p', 'rename to:'], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        except OSError as e:
-            print('OSError: %s' % e.message)
-            sys.exit(1)
-
-        new_name, stderr = p.communicate('')
-        new_name = new_name.decode('UTF-8').strip()
+        # Prompt the user for a new name
+        new_name = self._dmenu_null('rename to:')
 
         # If the user entered a name then rename
         if new_name:
             self.connection.command('rename workspace to %d:%s' % (ws_current, new_name))
 
     def show_menu(self):
+        """Shows the customizable menu containing i3-action's actions."""
         # Just send the list to the dmenu command and that's about it.
         action = self._dmenu(self.menu_items, len(self.menu_items), 'action:')
 
@@ -189,6 +250,7 @@ class i3actions(object):
             action() # Call it.
 
     def restore(self):
+        """Restores all workspace names to the ones defined in the config file (default)"""
         # Get homedir
         home = expanduser('~')
 
