@@ -21,8 +21,7 @@ Keep in mind some of these have yet to be fully implemented.
 * [i3ipc](https://github.com/acrisci/i3ipc-python) installed
 
 ## installation
-There is no ```setup.py``` at the moment, however you can install it by downloading and running 
-```i3-actions.py```.
+There is no ```setup.py``` at the moment, however you can install it by downloading and running ```i3-actions.py```.
 
 I will add the setup information once it's barely useful.  
 At the moment it's a dirty playground since I'm learning about i3ipc as I'm coding this.
