@@ -12,7 +12,7 @@ import re
 try:
     import i3ipc
 except ImportError:
-    print('i3-actions cannot work without i3ipc. Exiting...')
+    print('i3actions cannot work without i3ipc. Exiting...')
     exit()
 
 class i3actions(object):
@@ -42,7 +42,7 @@ class i3actions(object):
 
         # Handle the input argument
         if(len(sys.argv)) < 2:
-            print('Usage: %s ACTION\n\nWhere ACTION is either one of these: jump_to, move_here' % sys.argv[0])
+            print('Usage: %s ACTION' % sys.argv[0])
             sys.exit(1)
 
         # Register the socket
@@ -235,7 +235,7 @@ class i3actions(object):
             self.connection.command('rename workspace to %d:%s' % (ws_current, new_name))
 
     def show_menu(self):
-        """Shows the customizable menu containing i3-action's actions."""
+        """Shows the customizable menu containing i3actions' actions."""
         # Just send the list to the dmenu command and that's about it.
         action = self._dmenu(self.menu_items, len(self.menu_items), 'action:')
 
