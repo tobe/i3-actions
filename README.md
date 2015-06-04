@@ -1,5 +1,7 @@
 ## what is i3-actions?
 
+![image of i3actions](https://raw.githubusercontent.com/infyhr/i3-actions/master/screenshot.png "Image of i3actions")
+
 i3-actions is a python3 utility for i3-wm which *mostly* makes *window managment* simpler and 
 faster by 
 integrating with **dmenu**.
