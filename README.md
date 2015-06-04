@@ -16,8 +16,6 @@ It features:
 - working with marks (adding, removing, jumping to)
 - ~~scratchpad support? someday maybe...~~
 
-Keep in mind some of these have yet to be fully implemented.
-
 ## requirements/dependencies?
 In order to use i3-actions, you will need the following:
 * Python 3 (tested with ```Python 3.4.3```)
@@ -25,7 +23,8 @@ In order to use i3-actions, you will need the following:
 * [i3ipc](https://github.com/acrisci/i3ipc-python) installed
 
 ## installation
-Before you can install the project, some things need to be set up in ```i3actions.py``` file.
+Before you can install the project, some things need to be set up in ```i3actions.py``` file.  
+Once you are done with tweaking, just run ``./setup.py install``.
 
 ### launching dmenu
 Adjust ```self.dmenu_args``` in order to point the script to the correct location of dmenu 
@@ -39,15 +38,13 @@ dmenu arguments.
 Let ```dmenu``` be at ```/usr/bin/dmenu```. Let it appear on bottom with the normal background 
 color of #000, normal foreground color of #ff0000 and the select background color of #000:
 ```python
-self.dmenu_args = ['/usr/bin/dmenu'] + ['-b', '-i', '-nb', '#000', '-nf', '#ff0000', '-sb', 
-'#000']
+self.dmenu_args = ['/usr/bin/dmenu'] + ['-b', '-i', '-nb', '#000', '-nf', '#ff0000', '-sb', '#000']
 ```
 (Note: ``-i`` stands for case-insensitive matching)
 
 ### layout items
-Edit ``self.layout_items`` in order to choose which of the entries appear when you execute the 
-``ch_layout`` action. Sometimes when you use this action you don't want them all to appear, or 
-perhaps you'd like to have your own labels.  
+Edit ``self.layout_items`` in order to choose which of the entries appear when you execute the ``ch_layout`` action.  
+Sometimes when you use this action you don't want them all to appear, or perhaps you'd like to have your own labels.  
 This is an ordered list.
 
 Same goes for ``self.menu_items``.  
@@ -58,11 +55,6 @@ When you use the action ``first_free``, i3actions will jump to the first free wo
 output ``self.main_output``.  
 This is important if you have more than one monitor and you don't want to focus the first free 
 workspace on your secondary monitor(s).
-
----
-
-**O**nce you are done with tweaking, just run ``./setup.py install``.
-
 
 ## using it
 In order to execute a certain action, all you need to do is call ``i3actions.py ACTION`` where 
@@ -146,11 +138,11 @@ bindsym $mod+1 workspace number 1
 ```
 
 ## things worth mentioning
-*Terminals have the same title, it doesn't change when running a process?*:  
+*Terminals have the same title, it doesn't change when running a process*:  
 [zsh](http://www.zsh.org/) solves this with 
 [oh-my-zsh](https://github.com/robbyrussell/oh-my-zsh).
 
-*Two windows with the same title (name)?*:  
+*Two windows with the same title (name)*:  
 Use marks.
 
 ## license
